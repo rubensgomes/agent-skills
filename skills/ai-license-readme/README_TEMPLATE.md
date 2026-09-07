@@ -38,12 +38,12 @@ Follow the steps in the [INITIAL_SETUP](./docs/INITIAL_SETUP.md).
 
 ## GitHub Actions
 
-| Workflow                                                 | Shows in Actions as        | What it does                                                 |
-|----------------------------------------------------------|----------------------------|--------------------------------------------------------------|
-| [`acr-create.yml`](./.github/workflows/acr-create.yml)   | **ACR Create (reusable)**  | Applies modules 01 → 04 → 06.                                |
-| [`acr-destroy.yml`](./.github/workflows/acr-destroy.yml) | **ACR Destroy (reusable)** | Destroys module 06 only.                                     |
-| [`main-verify.yml`](./.github/workflows/main-verify.yml) | **Main Verify**            | Checks `terraform` and `workflows` always, `sonar` optional. |
-| [`release.yml`](./.github/workflows/release.yml)         | **Release (tag push)**     | Validates and cuts a release.                                |
+| Workflow                                                 | Purpose                                                      |
+|----------------------------------------------------------|--------------------------------------------------------------|
+| [`acr-create.yml`](./.github/workflows/acr-create.yml)   | Applies modules 01 → 04 → 06.                                |
+| [`acr-destroy.yml`](./.github/workflows/acr-destroy.yml) | Destroys module 06 only.                                     |
+| [`main-verify.yml`](./.github/workflows/main-verify.yml) | Checks `terraform` and `workflows` always, `sonar` optional. |
+| [`release.yml`](./.github/workflows/release.yml)         | Validates and cuts a release.                                |
 
 ## Working on This Project
 
@@ -59,32 +59,33 @@ maintained by a single person.
 
 ### Starting New Work
 
-Prior to starting new work you need to ensure that you have the minimum tools in
-`Prerequisites` installed.
+Before starting new work, ensure that all required prerequisites are installed.
 
-- Follow the steps below:
+1. Sync the local `main` branch with the remote repository.
 
-  ```bash
-  # 1. Always start from a current main.
-  git switch main && git pull
-  
-  # 2. Do your work. Before committing, run what the CI checks will run:
-  make fmt          # rewrites; the CI check is fmt -check and will fail on drift
-  make validate     # all module roots, no cloud calls
-  
-  # 3. Record the change under [Unreleased] in CHANGELOG.md.  You must have an 
-  #    entry in the CHANGELOG prior to releasing.
-  
-  # 4. Then commit.
-  git add -A && git commit
-  
-  # 5. Push. Nothing verifies this automatically — step 2 was the gate.
-  git push origin main
-  
-  # 6. Optional: run the same three checks in CI against the pushed commit.
-  gh workflow run main-verify.yml --ref main && gh run watch
-  #    Add -f run_sonar=true to include the SonarCloud scan (off by default).
-  ```
+    ```bash
+    # Always start from a current main.
+    git switch main && git pull
+    ````
+
+2. Modify the project as needed.
+
+3. Record the change under [Unreleased] in the `CHANGELOG.md` file accordingly.
+   You must have an entry in the `CHANGELOG.md` prior to releasing.
+
+4. Add, commit changes locally.
+
+   ```bash
+   # Nothing verifies or triggers a release automatically
+   git add -A && git commit
+   ```
+
+5. Display the current version and run a preliminary release preflight check.
+
+   ```bash
+   # Nothing triggers a release automatically.  Follow Cutting a Release steps. 
+   make version && make release-check
+   ```
 
 Two things worth knowing:
 
@@ -97,32 +98,50 @@ Two things worth knowing:
 
 ### Cutting a Release
 
-A release does the following steps:
+Follow the steps below to cut a release.
 
-1. bumps the project [Semantic Version](https://semver.org/).
-2. rolls the CHANGELOG
-3. commits and tags
-4. then publishes
+1. Sync the local `main` branch with the remote repository.
 
-- Follow the steps below:
+    ```bash
+    # Current main, and see what each bump level would produce.
+    git switch main && git pull
+    ````
 
-  ```bash
-  # 1. Current main, and see what each bump level would produce.
-  git switch main && git pull
-  make version && make release-check
-  
-  # 2. Bump. Applies version, rolls [Unreleased] CHANGELOB into a dated 
-  # section, commits,and creates the annotated tag.
-  # All local — nothing is pushed.
-  make release-patch             # or release-minor / release-major
-  
-  # 3. Publish. Pushes main, then the tag, which fires release.yml.
-  make release-push
-  ```
+2. Display the current version and run a release preflight only check reporting
+   what each bump would produce.
 
-**Nothing leaves the machine until step 3**, which is the whole reason the bump
+    ```bash
+    make version && make release-check
+    ````
+
+3. Bump the [Semantic Version](https://semver.org/) project version, roll
+   changelog, commit, tag. Local only.
+
+    ```bash
+    # Bump. Applies version, rolls [Unreleased] CHANGELOB into a dated 
+    # section, commits,and creates the annotated tag.
+    # All local — nothing is pushed.
+    make release-patch             # or release-minor / release-major
+    ```
+
+   | Level   | Use for                                                       |
+                                    |---------|---------------------------------------------------------------|
+   | `patch` | docs and in-place tweaks no caller can observe                |
+   | `minor` | new reusable workflows, composite actions, or optional inputs |
+   | `major` | anything that breaks a consumer stub                          |
+
+
+4. Pushes main, then the tag, which fires release.yml.
+
+    ```bash
+    make release-push
+    ```
+
+**Nothing leaves the machine until step 4**, which is the whole reason the bump
 and the push are separate targets. A mistyped level or a bad changelog roll is
 undone with `git tag -d v$(cat VERSION) && git reset --hard HEAD~1`.
+
+5. Manually trigger the `relelase.yml` workflow in the project GitHub repo.
 
 ## Authorship
 

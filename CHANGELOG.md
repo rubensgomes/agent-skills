@@ -31,6 +31,8 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Changed
 
+- Updated documentation.
+
 ### Fixed
 
 ## [0.0.6] - 2026-09-07
