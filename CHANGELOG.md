@@ -29,7 +29,11 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+- added new skill, and refactored/cleaned up other ones.
+
 ### Changed
+
+- removed redundant skill.
 
 ### Fixed
 

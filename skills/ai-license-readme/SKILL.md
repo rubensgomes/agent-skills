@@ -24,4 +24,5 @@ directory.
 5. Ensure the directory contains a `README.md` file that includes at the top the
    Markdown badges, as well as "AI Disclaimer" and "License" sections similar to
    `./README_TEMPLATE.md`.
-6. You are done.
+6. Update the CHANGELOG.md file if found in that directory.
+7. You are done.
