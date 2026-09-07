@@ -31,7 +31,9 @@ directory.
 8. Near the end of the file, include "Authorship" and "License" sections like
    the ones in `./README_TEMPLATE.md`. The "Authorship" and "License"
    sections must contain the exact same content found in `./README_TEMPLATE`.
-9. Update the year in the copied LICENSE file, if necessary.
-10. Remove the `NOTICE` file from the project root directory, if present.
-11. Update the CHANGELOG.md file if found in that directory.
-12. You are done.
+9. Ensure that the "Authorship" section has the correct URL of the original
+   project located in the <https://github.com/rubensgomes-org/>.
+10. Update the year in the copied LICENSE file, if necessary.
+11. Remove the `NOTICE` file from the project root directory, if present.
+12. Update the CHANGELOG.md file if found in that directory.
+13. You are done.

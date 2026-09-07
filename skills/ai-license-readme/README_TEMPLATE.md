@@ -23,7 +23,7 @@ The following prerequisites are required:
 - Microsoft Azure account
 - An active Azure subscription
 - An Azure RBAC role that allows you to create the resources, such as resource
-  gorups, container registry, container apps, and databases.
+  groups, container registry, container apps, and databases.
 - GitHub account
 - UNIX-based operating system (for example, AIX, Linux, macOS, or Solaris)
 - Azure CLI 2.90+
@@ -32,7 +32,7 @@ The following prerequisites are required:
 - Git 2.55+
 - GNU Make 3.8+
 
-### Configutation
+### Configuration
 
 Follow the steps in the [INITIAL_SETUP](./docs/INITIAL_SETUP.md).
 
@@ -118,18 +118,17 @@ Follow the steps below to cut a release.
    changelog, commit, tag. Local only.
 
     ```bash
-    # Bump. Applies version, rolls [Unreleased] CHANGELOB into a dated 
+    # Bump. Applies version, rolls [Unreleased] CHANGELOG into a dated 
     # section, commits,and creates the annotated tag.
     # All local — nothing is pushed.
     make release-patch             # or release-minor / release-major
     ```
 
    | Level   | Use for                                                       |
-                                    |---------|---------------------------------------------------------------|
+   |---------|---------------------------------------------------------------|
    | `patch` | docs and in-place tweaks no caller can observe                |
    | `minor` | new reusable workflows, composite actions, or optional inputs |
    | `major` | anything that breaks a consumer stub                          |
-
 
 4. Pushes main, then the tag, which fires release.yml.
 
@@ -141,7 +140,7 @@ Follow the steps below to cut a release.
 and the push are separate targets. A mistyped level or a bad changelog roll is
 undone with `git tag -d v$(cat VERSION) && git reset --hard HEAD~1`.
 
-5. Manually trigger the `relelase.yml` workflow in the project GitHub repo.
+5. Manually trigger the `release.yml` workflow in the project GitHub repo.
 
 ## Authorship
 
