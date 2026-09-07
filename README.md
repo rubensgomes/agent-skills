@@ -1,9 +1,22 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![AI Assisted](https://img.shields.io/badge/AI--Assisted-Development-007ACC?logo=openai&logoColor=white)](./AI_DISCLAIMER.md)
+
 # My AI Agent Skills
 
 This repository serves as a central location for my AI agent skills library. I
 use these skills across multiple projects and a variety of tasks. Some skills
 are tailored to specific domains, while others focus on technical workflows or
 provide general-purpose capabilities.
+
+## AI Disclaimer
+
+This project includes code and documentation created with the assistance of AI
+tools. For details on usage, limits, and review practices, please see
+the [AI Disclaimer](./AI_DISCLAIMER.md).
+
+## License
+
+The project is licensed under the [MIT License](./LICENSE).
 
 ## Installing
 
@@ -55,19 +68,6 @@ The tag push fires
 Release whose notes are that version's changelog section.
 
 Run `make help` for every target.
-
-## Authorship and License
-
-This is a personal project authored and maintained by
-[Rubens Gomes](https://rubensgomes.com/)
-at [rubensgomes/agent-skills](https://github.com/rubensgomes/agent-skills).
-
-The project is licensed under the [MIT License](./LICENSE).
-
-## AI-Assisted Development
-
-See [NOTICE](./NOTICE) and [AI_DISCLAIMER.md](./AI_DISCLAIMER.md) about
-AI-assisted code and documentation generation.
 
 ---
 
