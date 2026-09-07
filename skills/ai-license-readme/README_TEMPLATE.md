@@ -48,7 +48,7 @@ Follow the steps in the [INITIAL_SETUP](./docs/INITIAL_SETUP.md).
 ## Working on This Project
 
 There are three primary workflows: making a modification, shipping a change and
-cutting a release. All the work occur directly on the `main` branch. This
+cutting a release. All work occurs directly on the `main` branch. This
 repository follows a trunk-based development model, with no feature branches or
 pull requests.
 
@@ -118,19 +118,20 @@ Follow the steps below to cut a release.
    changelog, commit, tag. Local only.
 
     ```bash
-    # Bump. Applies version, rolls [Unreleased] CHANGELOG into a dated 
-    # section, commits,and creates the annotated tag.
+    # Bump. Applies version, rolls [Unreleased] CHANGELOG into a dated
+    # section, commits, and creates the annotated tag.
     # All local — nothing is pushed.
     make release-patch             # or release-minor / release-major
     ```
 
    | Level   | Use for                                                       |
-   |---------|---------------------------------------------------------------|
+      |---------|---------------------------------------------------------------|
    | `patch` | docs and in-place tweaks no caller can observe                |
    | `minor` | new reusable workflows, composite actions, or optional inputs |
    | `major` | anything that breaks a consumer stub                          |
 
-4. Pushes main, then the tag, which fires release.yml.
+4. Push main, then the tag. This publishes nothing on its own — `release.yml`
+   is manual.
 
     ```bash
     make release-push
@@ -140,7 +141,21 @@ Follow the steps below to cut a release.
 and the push are separate targets. A mistyped level or a bad changelog roll is
 undone with `git tag -d v$(cat VERSION) && git reset --hard HEAD~1`.
 
-5. Manually trigger the `release.yml` workflow in the project GitHub repo.
+5. Manually trigger the `release.yml` workflow in the project GitHub repo. Or
+   run the commands below.
+
+    ```bash
+    gh workflow run release.yml --ref vX.Y.Z
+    gh run list --workflow=release.yml
+    ```
+
+**Nothing leaves the machine until step 4**, and nothing is published until step
+5, which is the whole reason the bump, the push and the dispatch are separate. A
+mistyped level or a bad changelog roll is undone with `git tag -d
+vX.Y.Z && git reset --hard HEAD~1`.
+
+Run `make help` for the full list of targets, including `release-tag`, which
+tags the changelog's top version without bumping.
 
 ## Authorship
 
