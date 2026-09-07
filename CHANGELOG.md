@@ -33,6 +33,13 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Fixed
 
+- Fixed the misindented delimiter row in the release bump-level table in
+  `skills/ai-license-readme/README_TEMPLATE.md`, which stopped the block from
+  rendering as a table, and aligned the GitHub Actions table.
+- Normalized three code fences in
+  `skills/ai-license-readme/README_TEMPLATE.md` that closed with four backticks
+  instead of three.
+
 ## [0.0.9] - 2026-09-07
 
 ### Added

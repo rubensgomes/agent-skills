@@ -66,7 +66,7 @@ Before starting new work, ensure that all required prerequisites are installed.
     ```bash
     # Always start from a current main.
     git switch main && git pull
-    ````
+    ```
 
 2. Modify the project as needed.
 
@@ -105,14 +105,14 @@ Follow the steps below to cut a release.
     ```bash
     # Current main, and see what each bump level would produce.
     git switch main && git pull
-    ````
+    ```
 
 2. Display the current version and run a release preflight only check reporting
    what each bump would produce.
 
     ```bash
     make version && make release-check
-    ````
+    ```
 
 3. Bump the [Semantic Version](https://semver.org/) project version, roll
    changelog, commit, tag. Local only.
@@ -125,37 +125,49 @@ Follow the steps below to cut a release.
     ```
 
    | Level   | Use for                                                       |
-      |---------|---------------------------------------------------------------|
+   |---------|---------------------------------------------------------------|
    | `patch` | docs and in-place tweaks no caller can observe                |
    | `minor` | new reusable workflows, composite actions, or optional inputs |
    | `major` | anything that breaks a consumer stub                          |
 
-4. Push main, then the tag. This publishes nothing on its own — `release.yml`
-   is manual.
+4. Push main, then the tag. The tag push fires `release.yml`, which validates
+   the tag and publishes the GitHub Release.
 
     ```bash
     make release-push
     ```
 
-**Nothing leaves the machine until step 4**, which is the whole reason the bump
-and the push are separate targets. A mistyped level or a bad changelog roll is
-undone with `git tag -d v$(cat VERSION) && git reset --hard HEAD~1`.
-
-5. Manually trigger the `release.yml` workflow in the project GitHub repo. Or
-   run the commands below.
+5. Watch the run.
 
     ```bash
-    gh workflow run release.yml --ref vX.Y.Z
+    gh run watch
     gh run list --workflow=release.yml
     ```
 
-**Nothing leaves the machine until step 4**, and nothing is published until step
-5, which is the whole reason the bump, the push and the dispatch are separate. A
-mistyped level or a bad changelog roll is undone with `git tag -d
-vX.Y.Z && git reset --hard HEAD~1`.
+6. Re-run a release.
 
-Run `make help` for the full list of targets, including `release-tag`, which
-tags the changelog's top version without bumping.
+- ATTENTION: To re-run a release — a first attempt that failed, or one you want
+  the SonarCloud gate on — dispatch the workflow **from the tag ref**, never
+  from `main`. In the GitHub Actions UI the "Use workflow from" dropdown
+  defaults to `main`; switch it to the `vX.Y.Z` tag.
+
+  ```bash
+  gh workflow run release.yml --ref vX.Y.Z
+  ```
+
+- Dispatching from a branch fails the workflow's first step with `Ref main
+   does not match VERSION (vX.Y.Z)`. That gate is deliberate: the ref the run
+  checks out is the ref that gets the GitHub Release, so it has to be the tag.
+
+7. Final notes
+
+- **Nothing leaves the machine until step 4**, which is the whole reason the
+  bump and the push are separate. A mistyped level or a bad changelog roll is
+  undone with `git tag -d vX.Y.Z && git reset --hard HEAD~1` — but only before
+  step 4: a pushed tag is never moved.
+
+- Run `make help` for the full list of targets, including `release-tag`, which
+  tags the changelog's top version without bumping.
 
 ## Authorship
 
