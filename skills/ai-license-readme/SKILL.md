@@ -21,8 +21,17 @@ directory.
 3. Copy and overwrite, if necessary, the `./AI_DISCLAIMER.md` file to that
    directory.
 4. Copy and overwrite, if necessary, the `./LICENSE` file to that directory.
-5. Ensure the directory contains a `README.md` file that includes at the top the
-   Markdown badges, as well as "AI Disclaimer" and "License" sections similar to
-   `./README_TEMPLATE.md`.
-6. Update the CHANGELOG.md file if found in that directory.
-7. You are done.
+5. Ensure that the directory contains a `README.md` file. If not, create one
+   using the `./README_TEMPLATE.md` as a guideline.
+6. Ensure that the directory contains a `docs/INITIAL_SETUP.md` file. If not,
+   create one copying the `./docs/INITIAL_SETUP.md`.
+7. At the top of the README, include Markdown badges and an "AI Disclaimer"
+   section like the one in `./README_TEMPLATE.md`. The "AI Disclaimer"
+   section must contain the exact same content found in `./README_TEMPLATE`.
+8. Near the end of the file, include "Authorship" and "License" sections like
+   the ones in `./README_TEMPLATE.md`. The "Authorship" and "License"
+   sections must contain the exact same content found in `./README_TEMPLATE`.
+9. Update the year in the copied LICENSE file, if necessary.
+10. Remove the `NOTICE` file from the project root directory, if present.
+11. Update the CHANGELOG.md file if found in that directory.
+12. You are done.

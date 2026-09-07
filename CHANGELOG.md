@@ -31,6 +31,8 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Changed
 
+- Updated the `ai-license-readme` skill.
+
 ### Fixed
 
 ## [0.0.5] - 2026-09-06
