@@ -29,6 +29,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.0.5] - 2026-09-06
+
+### Added
+
 - added new skill, and refactored/cleaned up other ones.
 
 ### Changed
