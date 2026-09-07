@@ -29,9 +29,13 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+- Added mit-license skill.
+
 ### Changed
 
 ### Fixed
+
+- Fixed documentation and extra spaces in skill.
 
 ## [0.0.1] - 2026-09-06
 

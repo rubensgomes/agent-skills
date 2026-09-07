@@ -13,7 +13,7 @@ provided in the argument.  If you encounter terraform files (e.g., files
 ending with the .tf extension) in this project, read ./tf.md, and follow the 
 instructions there also.
 
-## Synchronization Guidelines:
+## Instructions
 
 1. If no argument is provided, print "Error: source project directory missing".
 2. Ensure that the $ARGUMENTS folder exists and is readable.
