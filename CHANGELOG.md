@@ -29,6 +29,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.0.1] - 2026-09-06
+
+### Added
+
 - `bin/sync-skills.sh`, a recursive per-file installer that mirrors a source
   skills directory into `~/.claude/skills/`. Overwrites what it manages, moves
   files it no longer recognises to `<dest>/old/` rather than deleting them,
