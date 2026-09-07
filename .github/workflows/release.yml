@@ -1,0 +1,212 @@
+# =============================================================================
+# Release (tag push)
+#
+# Repository:
+#   https://github.com/rubensgomes/agent-skills
+#
+# Purpose:
+#   Validates and publishes a release when a semver tag is pushed. It is the
+#   gate that keeps a tag honest: the tag name, the VERSION file, and the
+#   CHANGELOG entry must all agree, and every skill and script must still be
+#   valid, before a GitHub Release appears.
+#
+# Trigger:
+#   push of a tag matching v*.*.* -- normally produced by:
+#       make release-minor      (bump, roll changelog, commit, tag; LOCAL)
+#       make release-push       (pushes main + the tag; fires this workflow)
+#
+#   Also workflow_dispatch, for re-running a release whose publish step failed
+#   after the tag was already pushed. Dispatch from the TAG ref, not a branch:
+#   dispatching from main fails step 2 straight away, because the ref name is
+#   not v$(cat VERSION).
+#
+# Branching:
+#   This repo is trunk-based. main is the trunk for current and all future
+#   work; releases are a bump plus a tag on main and are cut nowhere else. The
+#   Makefile's RELEASE_PRECHECK refuses to cut from any other branch, and
+#   `make release-push` pushes main before the tag so this workflow can never
+#   fire against a commit that is not on the trunk.
+#
+# Authentication:
+#   The only token is the built-in github.token, scoped by the `contents:
+#   write` permission below purely so `gh release create` can publish. This
+#   workflow holds no other secrets and reaches nothing outside GitHub.
+#
+# Notes:
+#   - Every `uses:` is pinned to a full commit SHA, with the tag it stood for
+#     in a trailing comment. A tag is a moving pointer the action's owner can
+#     repoint at any commit; a SHA is the commit. Bump one by resolving the
+#     tag again, not by editing the comment.
+#   - `gh` and `shellcheck` are both preinstalled on ubuntu-latest, so the
+#     release is published with the CLI rather than a third-party action.
+#   - Step 3 runs the SAME `make verify` a workstation runs, so CI and a local
+#     check cannot drift. One caveat is documented there: the bash 3.2 parse
+#     check inside `make lint` is a no-op on this runner.
+# =============================================================================
+
+name: Release (tag push)
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+  # Manual re-run. See the Trigger note above: dispatch from the tag ref.
+  workflow_dispatch:
+
+permissions:
+  # contents: write is required to create the GitHub Release. Everything else
+  # stays at the default of none.
+  contents: write
+
+concurrency:
+  # Keyed on the tag, so two different releases never serialise behind each
+  # other, but a re-run of the same tag cannot race itself.
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Validate and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      # The pushed tag, e.g. "vX.Y.Z". github.ref_name is the short ref.
+      # Passed through env rather than interpolated into a run body, so no
+      # ${{ }} value is ever pasted into a shell.
+      RELEASE_TAG: ${{ github.ref_name }}
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Step 1: Checkout repository content
+      #
+      # fetch-depth: 0 so the full history and every tag are present -- needed
+      # if you ever want to diff against the previous release from here.
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # Step 2: Consistency gate (fail fast, before anything else)
+      #
+      # Why:
+      #   `make release-<level>` keeps the tag, VERSION, and CHANGELOG in sync
+      #   by construction. A tag cut by hand -- or one moved after the fact --
+      #   can drift. This is the only place that drift gets caught.
+      #
+      # Checks:
+      #   1. v$(cat VERSION) == the pushed tag.
+      #   2. CHANGELOG.md carries a "## [<version>]" heading.
+      # -----------------------------------------------------------------------
+      - name: Verify tag matches VERSION and CHANGELOG
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f VERSION ]; then
+            echo "::error::VERSION file is missing at the repo root."
+            exit 1
+          fi
+
+          version="$(tr -d '[:space:]' < VERSION)"
+          expected="v${version}"
+
+          echo "VERSION file : ${version}"
+          echo "Pushed tag   : ${RELEASE_TAG}"
+
+          if [ "${expected}" != "${RELEASE_TAG}" ]; then
+            echo "::error::Tag ${RELEASE_TAG} does not match VERSION (${expected}). Cut releases with 'make release-<level>'."
+            exit 1
+          fi
+
+          if ! grep -q "^## \[${version}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [${version}]' section."
+            exit 1
+          fi
+
+          echo "version=${version}" >> "$GITHUB_ENV"
+
+      # -----------------------------------------------------------------------
+      # Step 3: Lint the scripts and validate the skills
+      #
+      # Runs the repo's own `make verify`, which is `lint` + `check-skills`:
+      # shellcheck and a bash parse over bin/*.sh, and a check that every
+      # skills/<dir>/SKILL.md carries frontmatter whose `name:` equals its
+      # directory. That last one matters because bin/sync-skills.sh mirrors by
+      # directory: a skill whose name disagrees with its location installs
+      # under one name and answers to another.
+      #
+      # Caveat, deliberately not worked around: `make lint` parses each script
+      # with both `bash` and `/bin/bash` to enforce bin/sync-skills.sh staying
+      # bash 3.2 compatible. On this runner both are bash 5, so that half of
+      # the check is a no-op here. It is a real check only on macOS, where
+      # /bin/bash is 3.2. CI is not the enforcement point for that constraint.
+      #
+      # shellcheck is preinstalled on ubuntu-latest; the guard is insurance
+      # against a future runner image dropping it, not a routine install.
+      # -----------------------------------------------------------------------
+      - name: Verify scripts and skills
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            echo "::notice::shellcheck not preinstalled; installing it."
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq shellcheck
+          fi
+
+          make verify
+
+      # -----------------------------------------------------------------------
+      # Step 4: Extract this version's changelog section as the release notes
+      #
+      # awk prints everything between "## [<version>]" and the next "## ["
+      # heading. Written to a file rather than an output variable so newlines
+      # and markdown survive intact.
+      # -----------------------------------------------------------------------
+      - name: Build release notes from CHANGELOG
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          awk -v ver="${version}" '
+            $0 == "## [" ver "]" || index($0, "## [" ver "] ") == 1 { f = 1; next }
+            f && /^## \[/ { exit }
+            f { print }
+          ' CHANGELOG.md > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "::error::Extracted release notes for ${version} are empty."
+            exit 1
+          fi
+
+          echo "----- release notes -----"
+          cat release-notes.md
+
+      # -----------------------------------------------------------------------
+      # Step 5: Publish the GitHub Release
+      #
+      # Idempotent-ish: if the release already exists (a re-run), `gh release
+      # create` fails, so we edit instead. Keeps re-runs from being a dead end.
+      # -----------------------------------------------------------------------
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists - updating notes."
+            gh release edit "${RELEASE_TAG}" \
+              --title "${RELEASE_TAG}" \
+              --notes-file release-notes.md
+          else
+            gh release create "${RELEASE_TAG}" \
+              --title "${RELEASE_TAG}" \
+              --notes-file release-notes.md
+          fi

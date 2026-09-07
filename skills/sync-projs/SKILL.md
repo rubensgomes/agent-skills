@@ -1,9 +1,17 @@
 ---
-name: sync-tf-projs
-description: Synchronize this Terraform project with a source project whose folder path is provided as an argument.
+name: sync-projs
+description: Synchronize this project working directory with a source project directory provided as an argument.
 argument-hint: <path-to-source-project-dir>
 disable-model-invocation: true
 ---
+
+## Overview
+
+This guide covers the synchronization of text files in the current project 
+working directory with a similar source project found in the directory 
+provided in the argument.  If you encounter terraform files (e.g., files 
+ending with the .tf extension) in this project, read ./tf.md, and follow the 
+instructions there also.
 
 ## Synchronization Guidelines:
 
@@ -27,27 +35,17 @@ disable-model-invocation: true
     project.
 12. Keep and maintain this project's current version. Change the version on this
     project only when cutting a new release.
-13. Do NOT change the values of any of the following variables or parameters
-    that appear in this project:
-    - TF_VAR_backend_resource_group_name
-    - TF_VAR_storage_account_id
-    - TF_VAR_container_name
-    - TF_VAR_acr_name
-    - TF_VAR_action_group_email
-    - TF_VAR_owner
-    - TF_VAR_prefix
-    - TF_VAR_rg_suffix
-14. Do NOT change the ALLOWED_ACTORS.
-15. Do NOT change the default ACR name found in GitHub workflow files.
-16. Skip any directory or subdirectory that starts with '.terraform'
-17. Skip any directory or subdirectory that starts with '.git'
-18. Compare files by content, never by file modification time. Treat a file as
+13. Do NOT change the ALLOWED_ACTORS.
+14. Do NOT change the default ACR name found in GitHub workflow files.
+15. Skip any directory or subdirectory that starts with '.terraform'
+16. Skip any directory or subdirectory that starts with '.git'
+17. Compare files by content, never by file modification time. Treat a file as
     changed only when its contents differ.
-19. Add to this project any file present in the source project but absent from
+18. Add to this project any file present in the source project but absent from
     this project.
-20. A file present in this project but absent from the source project is
+19. A file present in this project but absent from the source project is
     ambiguous: it may have been removed from the source project, or added to
     this project and never present in the source. In this case prompt question
     for the user to decide.
-21. When you are done syncing this project, stop there. Do not run any other
+20. When you are done syncing this project, stop there. Do not run any other
     commands afterward.
