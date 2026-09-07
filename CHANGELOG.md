@@ -33,6 +33,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Fixed
 
+## [0.0.8] - 2026-09-07
+
+### Added
+
+### Changed
+
+### Fixed
+
 - Fixed typos and table in skill doc.
 
 ## [0.0.7] - 2026-09-07
