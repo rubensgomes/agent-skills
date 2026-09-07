@@ -29,6 +29,8 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+- added ai-disclaimer skill
+
 ### Changed
 
 ### Fixed
