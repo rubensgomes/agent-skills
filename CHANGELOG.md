@@ -29,6 +29,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.0.11] - 2026-09-08
+
+### Added
+
 - Added new refresh-session skill
 
 ### Changed
