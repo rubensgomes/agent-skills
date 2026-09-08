@@ -3,7 +3,7 @@ name: show-understanding
 description: >-
   Requests the agent to read the specified file and demonstrate 
   its understanding.
-argument-hint: "<path-to-file>"
+argument-hint: "[file-path]"
 disable-model-invocation: true
 ---
 

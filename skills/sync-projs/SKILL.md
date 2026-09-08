@@ -3,7 +3,7 @@ name: sync-projs
 description: >-
   Synchronize this project working directory with a source 
   project directory provided as an argument.
-argument-hint: "<path-to-source-project-dir>"
+argument-hint: "[path-to-source-project-dir]"
 disable-model-invocation: true
 ---
 
