@@ -29,6 +29,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.0.13] - 2026-09-11
+
+### Added
+
 - Added a "Developing" section to `README.md` documenting `make lint`,
   `make check-skills`, and `make verify` as the checks a change has to pass,
   and tying them to the gate `release.yml` runs.
