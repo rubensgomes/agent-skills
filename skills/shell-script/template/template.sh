@@ -8,7 +8,7 @@
 ##  1) Bash functions libraries installed at "${HOME}/lib/sh-lib".
 ##  2) GNU bash version 4.2 or higher required by associative arrays.
 ##  3) curl 8.7.1 or higher.
-#   4) getopt from util-linux 2.30.2 or higher.
+##  4) getopt from util-linux 2.30.2 or higher.
 ##  5) jq jq-1.8.2 or higher.
 ##  6) sha256sum from GNU coreutils 8.22 or higher.
 ##
@@ -35,19 +35,16 @@ readonly BASH_MAJOR_VERSION="4"
 # shellcheck disable=SC2034
 readonly BASH_MINOR_VERSION="2"
 
-# Set to TRUE when debuggin code using bassupport-pro.  This is
+# Set to TRUE when debugging code using bassupport-pro.  This is
 # required to bypass trap handlers which crashes code when running
 # from debugger
 readonly IS_DEBUGGER=FALSE
-
-# UNIT_TESTING is set to TRUE when running unit testing.
-readonly UNIT_TESTING=FALSE
 
 # temporary folder for this shell script
 [[ -z "${TMP_DIR:-}" ]] && readonly TMP_DIR="/tmp/${PRG}"
 
 # extra tools required by this script to run.
-[[ -z "${REQUIRED_TOOLS:-}" ]] && readonly -a REQUIRED_TOOLS=(
+[[ ! -v REQUIRED_TOOLS ]]  && readonly -a REQUIRED_TOOLS=(
   "curl"
   "jq"
   "sha256sum"
@@ -67,12 +64,15 @@ readonly UNIT_TESTING=FALSE
 # -------------------- >>> Import Basic Libraries <<< ---------------
 
 # logging message library
+# shellcheck source=/dev/null
 source "${HOME}/lib/sh-lib/msg_lib.sh" || exit
 
 # operating system library
+# shellcheck source=/dev/null
 source "${HOME}/lib/sh-lib/os_lib.sh" || exit
 
 # bash library
+# shellcheck source=/dev/null
 source "${HOME}/lib/sh-lib/sh_lib.sh" || exit
 
 
@@ -118,7 +118,7 @@ General Non Argument Options:
   -d, --debug                  prints debug messages
   -h, --help                   prints this help
   -q, --quiet                  prints only error|fatal messages
-  -n, --dry-run                inspects only, does NOT deploy
+  -n, --dry-run                inspects only, does NOT change anything
   -v, --verbose                adds extra details to messages
   -x, --trace                  traces commands
 
@@ -201,12 +201,11 @@ parse_options() {
   if ! temp=$(
     getopt \
       --o 'dhnqvxt:u:' \
-      --long 'debug,dry-run,help,quiet,\
-proj-url:,topics:,trace,verbose'\
+      --long 'debug,dry-run,help,quiet,proj-url:,topics:,trace,verbose'\
       --name "${PRG}" \
       -- "${@}"
   ); then
-    msg::error "failed to parse CLI inpuit arguments."
+    msg::error "failed to parse CLI input arguments."
     usage
     return 2
   fi
@@ -231,7 +230,7 @@ proj-url:,topics:,trace,verbose'\
 
       ########## --help #############################################
       '-h' | '--help')
-        deploy::help
+        help
         exit 0
         ;;
 
@@ -254,7 +253,7 @@ proj-url:,topics:,trace,verbose'\
       '-t' | '--topics')
         if [[ -z "${2:-}" || -z "${2//[[:space:]]/}" ]]; then
           msg::error "topics is missing or blank."
-          deploy::usage
+          usage
           return 2
         fi
         g_topics="$(sh::trim_space "${2}")" || return
@@ -327,7 +326,7 @@ proj-url:,topics:,trace,verbose'\
 ## Arguments:
 ##  None
 ## Returns:
-##   0 if okay, somethine else if fails.
+##   0 if okay, something else if fails.
 #####################################################################
 check_required_tool() {
   msg::debug "entering %s:%s\n" "${FUNCNAME[0]}" "${LINENO}"
@@ -365,12 +364,13 @@ check_required_tool() {
 ##   exit status code based on signal being handled.
 #####################################################################
 signal_handler() {
+  local -r rc=$?
   msg::debug "entering %s:%s\n" "${FUNCNAME[0]}" "${LINENO}"
 
   local -r signal="${1:-}"
   msg::debug "handling signal [%s].\n" "${signal}"
 
-  # disables following signals to avoid loooping
+  # disables following signals to avoid looping
   trap - ERR
   trap - EXIT
   trap - HUP  # signal 1
@@ -383,7 +383,7 @@ signal_handler() {
   case "${signal}" in
     HUP)
       msg::warn \
-        "the shell controlling terminal was hang up: %s\n" \
+        "the shell controlling terminal was hung: %s\n" \
        "SIGHUP"
       exit_code=129 # 1+128
       ;;
@@ -402,11 +402,12 @@ signal_handler() {
     TERM)
       msg::warn "someone asked the current execution to stop: %s\n" \
         "SIGTERM"
-      exit_code=130
+      exit_code=143 # 15+128
       ;;
     ERR)
       msg::warn "execution interrupted by Bash ERR signal: %s\n" \
         "SIGERR"
+      exit_code=${rc}
       ;;
     EXIT)
       msg::debug "handling %s event\n" "SIGEXIT"
@@ -428,7 +429,7 @@ signal_handler() {
       is_rm_local=TRUE
     else
       # logging or other display message should go to stderr because
-      # the dtdout is reserved to pass data between functions.
+      # the stdout is reserved to pass data between functions.
       printf "\nWARNING! This will remove folder:\n%s\n" \
         "${folder}" >&2
       msg::yes_no && is_rm_local=TRUE
@@ -436,9 +437,7 @@ signal_handler() {
 
     if [[ "${is_rm_local}" == TRUE ]]; then
       msg::debug "removing tmp folder [%s].\n" "${folder}"
-      #rm -fr "${folder}"
-      # for sanity I want to use -i for now
-      rm -ri "${folder}"
+      rm -fr "${folder}"
     fi
 
   fi
@@ -476,7 +475,7 @@ main() {
 
   # --------------- >>> Parse CLI Input Arguments <<< ---------------
 
-  parse_options "${@:-}" || return
+  parse_options "$@" || return
 
   msg::debug "Bash version: %s\n" "${BASH_VERSION}"
   msg::info "Running %s\n" "${PRG}"
@@ -516,14 +515,7 @@ main() {
 ## -------------------- >>> Main Program Body <<< -------------------
 ## ------------------------------------------------------------------
 
-# UNIT_TESTING is set to TRUE when running with (-t option argument)
-# or during unit testing. simply return when this program is being
-# sourced by a unit test framework
-[[ "${UNIT_TESTING:-}" == TRUE ]] && \
-  printf "Runing unit tests.\n" && \
-  return 0
-
-if ! main "${@:-}"; then
+if ! main "$@"; then
   printf "\n%s failed!\n" "${PRG}" >&2
   exit 1
 fi
