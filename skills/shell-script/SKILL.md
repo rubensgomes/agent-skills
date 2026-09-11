@@ -43,7 +43,8 @@ Use the guidelines below when generating or modifying bash shell scripts.
   Instead, use the POSIX form only (e.g., `my_func() {...}`)
 - **Local Variables**: Inside a function, always declare your variables using
   the local keyword so they don't break things outside that function.
-- **Global Variables**: Should be named starting with "g_" (e.g.,
+- **Global Variables**:  You should avoid using global variables. But when
+  used, global variables should be named starting with "g_" (e.g.,
   `g_is_dry_run`). See `template/template.sh`, and they should be declared
   at the top of the file before all the function declarations.
 - **Built-ins**: Use `printf` instead of `echo` for more reliable and
@@ -102,9 +103,10 @@ Use the guidelines below when generating or modifying bash shell scripts.
 - **Trap Handler**: Write a function similar to `signal_handler()` found in
   the `template/template.sh` to trap any signal caught inside the shell script
   program. You should register this function from somewhere at top of `main()`.
-- **Reset Globals**: Write a function similar to `reset_globals()` found in
-  the `template/template.sh`. You should call this function from
-  somewhere at top of `main()`.
+- **Reset Globals**: Avoid using global variables. But if you use global
+  variables write a function similar to `reset_globals()` found in the
+  `template/template.sh`. You should call this function from somewhere at top of
+  `main()`.
 - **Main Function**: Write a function similar to `main()` found in the
   `template/template.sh`. You should call this function from somewhere at bottom
   of the shell script.
@@ -140,6 +142,29 @@ Use the guidelines below when generating or modifying bash shell scripts.
 - **Suppressions**: Silence a finding only when it is a genuine false
   positive, using a narrow `# shellcheck disable=SCxxxx` directive on the
   line above the offending line. Never disable a check for the whole file.
+
+## Coding Principles
+
+- **Single responsibility**: Every function must do exactly **one thing**.
+- **Clean Code**: Use self-explaining variables and function names, minimal
+  comments that explain why, not what. No magic numbers, use named constants.
+- **Small Function**:  Keep functions small whenever possible (ideally fewer
+  than 40 lines, with a maximum of 80 lines), excluding blank lines and
+  comments.
+- **Modularity** — Structure code using clear functions organized into
+  reusable testable pieces.
+- Structure scripts using clear functions rather than executing loose commands
+  in the file root.
+- **Avoid Global Variables**: Avoid using global variables. Prefer to pass
+  function arguments instead. Global variables cause hidden dependencies,
+  hard-to-track bugs, and severe maintenance issues in software systems.
+- **Encapsulation** Functions should hide their internal state and
+  protect data from outside interference. Global variables expose data to every
+  part of a program, breaking this boundary.
+- **Avoid Excessive Comments**:  Keep file and function header comments
+  concise and only to describe main purpose of the shell script and function.
+  Do not comment that explain what the code does, or how to use the code. The
+  `usage()` and `help()` provide that information if needed.
 
 ## Code Patterns and Template
 

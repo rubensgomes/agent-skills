@@ -5,20 +5,15 @@
 
 This repository serves as a central location for my AI agent skills library. I
 use these skills across multiple projects and a variety of tasks. Some skills
-are tailored to specific domains, while others focus on technical workflows or
-provide general-purpose capabilities.
-
-## AI Disclaimer
-
-This project includes code and documentation created with the assistance of AI
-tools. For details on usage, limits, and review practices, please see
-the [AI Disclaimer](./AI_DISCLAIMER.md).
+are tailored to specific programming languages (e.g., Bash, Java, Python), 
+while others may focus on technical workflows or provide general-purpose 
+capabilities.
 
 ## License
 
 The project is licensed under the [MIT License](./LICENSE).
 
-## Installing
+## Installing in Claude Code
 
 `bin/sync-skills.sh` mirrors this repository's `skills/` directory into
 `~/.claude/skills/`:

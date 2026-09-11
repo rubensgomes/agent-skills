@@ -29,9 +29,15 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+- added new skill for shell script
+
 ### Changed
 
+- changed sync shell script to save old skills in different folder
+
 ### Fixed
+
+- fixed issues with skills, shell script and documentation
 
 ## [0.0.11] - 2026-09-08
 
