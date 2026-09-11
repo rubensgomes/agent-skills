@@ -1,12 +1,14 @@
 ---
 name: java-spring
 description: >-
-  A set of guidelines to use when working on Java Spring Boot projects.
+  A set of guidelines to use when generating, or changing files in Java Spring
+  Boot projects.
 ---
 
 ## Overview
 
-These guidelines are to be used in Java Spring Boot projects.
+Guidelines to be used when creating or modifying files in Java Spring Boot 
+projects.
 
 ## Instructions
 
@@ -43,3 +45,5 @@ These guidelines are to be used in Java Spring Boot projects.
 - Use try-with-resources for resource management.
 - Do NOT use wildcard imports.
 - Use `Objects.requireNonNull()` for null checks.
+
+

@@ -134,7 +134,7 @@ jobs:
       #
       # Runs the repo's own `make verify`, which is `lint` + `check-skills`:
       # shellcheck and a bash parse over bin/*.sh, and a check that every
-      # skills/<dir>/SKILL.md carries frontmatter whose `name:` equals its
+      # skills/<dir>/SKILL_OLD.md carries frontmatter whose `name:` equals its
       # directory. That last one matters because bin/sync-skills.sh mirrors by
       # directory: a skill whose name disagrees with its location installs
       # under one name and answers to another.

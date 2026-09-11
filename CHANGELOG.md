@@ -12,7 +12,7 @@ release-check` prints the same three lines against the current `VERSION`.
 
 A rename is MAJOR because `bin/sync-skills.sh` mirrors skill directories by
 name: renaming one retires the old directory from every machine that syncs,
-moving it to `~/.claude/skills/old/`.
+moving it to `~/.claude/old-skills/`.
 
 Add entries under `[Unreleased]` as you work. Do not edit the version headings
 by hand: `make release-<level>` renames `[Unreleased]` to the new version and
@@ -29,9 +29,23 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+- Added a "Developing" section to `README.md` documenting `make lint`,
+  `make check-skills`, and `make verify` as the checks a change has to pass,
+  and tying them to the gate `release.yml` runs.
+
 ### Changed
 
 ### Fixed
+
+- Fixed the AI-Assisted badge in `README.md`, which linked to an
+  `AI_DISCLAIMER.md` that does not exist at the repository root. The badge
+  stays, the link is gone.
+- Fixed the backup path in `README.md` and in this file's note on why a rename
+  is MAJOR: `bin/sync-skills.sh` moves retired files to `~/.claude/old-skills/`,
+  a sibling of the destination, not to `~/.claude/skills/old/` inside it.
+- Fixed the install description in `README.md`, which read as though
+  `bin/sync-skills.sh` defaults to this repository's `skills/` directory. The
+  `--source` option is required; `make install` is what supplies it.
 
 ## [0.0.12] - 2026-09-11
 

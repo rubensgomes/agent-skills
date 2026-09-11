@@ -1,22 +1,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![AI Assisted](https://img.shields.io/badge/AI--Assisted-Development-007ACC?logo=openai&logoColor=white)](./AI_DISCLAIMER.md)
+
 
 # My AI Agent Skills
 
 This repository serves as a central location for my AI agent skills library. I
-use these skills across multiple projects and a variety of tasks. Some skills
+use these skills across multiple software development projects. Some skills
 are tailored to specific programming languages (e.g., Bash, Java, Python), 
-while others may focus on technical workflows or provide general-purpose 
-capabilities.
+while others may provide general-purpose capabilities.
 
-## License
-
-The project is licensed under the [MIT License](./LICENSE).
 
 ## Installing in Claude Code
 
-`bin/sync-skills.sh` mirrors this repository's `skills/` directory into
-`~/.claude/skills/`:
+`make install` runs `bin/sync-skills.sh` against this repository's `skills/`
+directory, mirroring it into `~/.claude/skills/`:
 
 ```bash
 make install-dry-run   # show what would change, touch nothing
@@ -24,9 +20,21 @@ make install           # sync ./skills into ~/.claude/skills
 ```
 
 Files already installed are overwritten from this repository. Files there that
-this repository no longer carries are moved to `~/.claude/skills/old/` rather
-than deleted, and the directories that leaves empty are removed. Run
-`bin/sync-skills.sh --help` for the full option list.
+this repository no longer carries are moved to `~/.claude/old-skills/` — a
+sibling of the destination, not a folder inside it — rather than deleted, and
+the directories that leaves empty are removed. Run `bin/sync-skills.sh --help`
+for the full option list.
+
+## Developing
+
+`make verify` is what a change has to pass before it lands, and it is exactly
+what [`release.yml`](./.github/workflows/release.yml) gates a release on:
+
+```bash
+make lint            # shellcheck + bash 5 and bash 3.2 parse of bin/*.sh
+make check-skills    # every SKILL.md has frontmatter matching its directory
+make verify          # both of the above
+```
 
 ## Branching
 
@@ -63,6 +71,10 @@ The tag push fires
 Release whose notes are that version's changelog section.
 
 Run `make help` for every target.
+
+## License
+
+The project is licensed under the [MIT License](./LICENSE).
 
 ---
 

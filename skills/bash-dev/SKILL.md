@@ -1,27 +1,18 @@
 ---
-name: shell-script
+name: bash-dev
 description: >-
-  A set of guidelines to use when generating or modifying a bash shell script.
+  Creates, edits, formats, and reviews a bash shell script.
 ---
 
-## Overview
+## CRITICAL: Initial Validation Step
 
-Use the guidelines below when generating or modifying bash shell scripts.
+Before running any other command or processing data, you MUST run the
+[bootstrap.sh](./scripts/bootstrap.sh) environment check script.
 
-## Instructions
-
-1. **Strict Mode**: Use the `sh::init` inside the `main()` function to
-   enforce strict mode. See `template/template.sh`.
-2. **Global Constants**: Define paths, tools, and immutable configurations at
-   the top using `readonly` or `declare -r`.
-3. **Comment**: Follow the patterns in `template/template.sh` to generate or
-   to modify file header and function comments.
-4. **Libraries**: Use the bash functions from the library files located at
-   `${HOME}/lib/sh-lib` whenever possible, rather than hand-rolling
-   equivalents. See `reference/sh-lib.md` for every available function,
-   its arguments, and its return/output convention.
-5. **Guarded-constant idiom**: Use guarded-constant idioms like
-   `[[ -z "${X:-}" ]] && readonly X=...`. See `template/template.sh`
+- **IF THE SCRIPT FAILS (Exit Code different from 0):** Stop immediately.
+  Report the exact error message to the user and ask them to configure the
+  missing dependency.
+- **IF THE SCRIPT PASSES (Exit Code 0):** Proceed to the steps below.
 
 ## Code Style & Formatting
 
@@ -45,8 +36,7 @@ Use the guidelines below when generating or modifying bash shell scripts.
   the local keyword so they don't break things outside that function.
 - **Global Variables**:  You should avoid using global variables. But when
   used, global variables should be named starting with "g_" (e.g.,
-  `g_is_dry_run`). See `template/template.sh`, and they should be declared
-  at the top of the file before all the function declarations.
+  `g_is_dry_run`).
 - **Built-ins**: Use `printf` instead of `echo` for more reliable and
   predictable text printing.
 - **Pipelines**: If a command pipe is long, split it onto multiple lines with
@@ -84,32 +74,48 @@ Use the guidelines below when generating or modifying bash shell scripts.
     done
     ```
 
+## Instructions
+
+1. **Strict Mode**: Use the `sh::init` inside the `main()` function to
+   enforce strict mode. See [template.sh](assets/template.sh).
+2. **Global Constants**: Define paths, tools, and immutable configurations at
+   the top using `readonly` or `declare -r`.
+3. **Comment**: Follow the patterns in [template.sh](assets/template.sh) to
+   generate or to modify file header and function comments.
+4. **Libraries**: Use the bash functions from the library files located at
+   `${HOME}/lib/sh-lib` whenever possible, rather than hand-rolling
+   equivalents. See `reference/sh-lib.md` for every available function,
+   its arguments, and its return/output convention.
+5. **Guarded-constant idiom**: Use guarded-constant idioms like
+   `[[ -z "${X:-}" ]] && readonly X=...`. See [template.sh](assets/template.sh)
+
 ## Function Requirements
 
-- **Usage**: Always add a `usage()` function to the shell script file.
-  Follow the patterns found in `template/template.sh`
-- **Help**: Always add a `help()` function to the shell script file.
-  Follow the patterns found in `template/template.sh`
+- **Usage**: Add a `usage()` function to the shell script file.
+  Follow the patterns found in [template.sh](assets/template.sh)
+- **Help**: Add a `help()` function to the shell script file.
+  Follow the patterns found in [template.sh](assets/template.sh)
 - **Logging**: Use the `msg::*` functions in `${HOME}/lib/sh-lib/msg_lib.sh`
   to print messages during the execution of the shell script. They all write
   to stderr and take `printf`-style arguments. Note `msg::error` returns
   while `msg::die` exits. See `reference/sh-lib.md`.
 - **CLI Options**: Write a function similar to `parse_options()` found in the
-  `template/template.sh` to parse CLI input options.
+  [template.sh](assets/template.sh) to parse CLI input options.
 - **Required tools**: Write a function similar to `check_required_tool()`
-  found in the `template/template.sh` to ensure all tools described in the
-  `REQUIRED_TOOLS` are installed. If you need any additional tools, add that
-  tool to the constant `REQUIRED_TOOLS` array.
+  found in the [template.sh](assets/template.sh) to ensure all tools described
+  in the `REQUIRED_TOOLS` are installed. If you need any additional tools, add
+  that tool to the constant `REQUIRED_TOOLS` array.
 - **Trap Handler**: Write a function similar to `signal_handler()` found in
-  the `template/template.sh` to trap any signal caught inside the shell script
-  program. You should register this function from somewhere at top of `main()`.
+  the [template.sh](assets/template.sh) to trap any signal caught inside the
+  shell script program. You should register this function from somewhere at top
+  of `main()`.
 - **Reset Globals**: Avoid using global variables. But if you use global
   variables write a function similar to `reset_globals()` found in the
-  `template/template.sh`. You should call this function from somewhere at top of
-  `main()`.
+  [template.sh](assets/template.sh). You should call this function from
+  somewhere at top of `main()`.
 - **Main Function**: Write a function similar to `main()` found in the
-  `template/template.sh`. You should call this function from somewhere at bottom
-  of the shell script.
+  [template.sh](assets/template.sh). You should call this function from
+  somewhere at bottom of the shell script.
 
 ## Naming Convention
 
@@ -118,7 +124,8 @@ Use the guidelines below when generating or modifying bash shell scripts.
 - **Variable Names**: Use lowercase with underscores for standard variables (e.
   g., file_path).
 - **Constants**: Use ALL CAPS with underscores for constants defined at the top
-  of the file (e.g., READONLY_PATH="/var/log"). See `template/template.sh`.
+  of the file (e.g., READONLY_PATH="/var/log").
+  See [template.sh](assets/template.sh).
 
 ## Defensive Programming Guidelines
 
@@ -138,7 +145,7 @@ Use the guidelines below when generating or modifying bash shell scripts.
 - **Sourced Libraries**: ShellCheck cannot follow the `${HOME}/lib/sh-lib`
   libraries and reports an `SC1091` for each one. Put a
   `# shellcheck source=/dev/null` directive on the line immediately above
-  every `source` statement, as `template/template.sh` does.
+  every `source` statement, as [template.sh](assets/template.sh) does.
 - **Suppressions**: Silence a finding only when it is a genuine false
   positive, using a narrow `# shellcheck disable=SCxxxx` directive on the
   line above the offending line. Never disable a check for the whole file.
@@ -169,5 +176,6 @@ Use the guidelines below when generating or modifying bash shell scripts.
 ## Code Patterns and Template
 
 When asked to write a complete script, or to modify an existing shell script,
-follow the patterns of the `template/template.sh` closely. As a matter of
-fact, all your scripts should resemble `template/template.sh`.
+follow the patterns of the [template.sh](assets/template.sh) closely. As a
+matter of fact, all your scripts should
+resemble [template.sh](assets/template.sh).
