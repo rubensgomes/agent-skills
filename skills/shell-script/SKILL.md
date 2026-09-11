@@ -16,8 +16,10 @@ Use the guidelines below when generating or modifying bash shell scripts.
    the top using `readonly` or `declare -r`.
 3. **Comment**: Follow the patterns in `template/template.sh` to generate or
    to modify file header and function comments.
-4. **Libraries**: Use the bash functions from library files located at
-   `${HOME}/lib/sh-lib` whenever possible.
+4. **Libraries**: Use the bash functions from the library files located at
+   `${HOME}/lib/sh-lib` whenever possible, rather than hand-rolling
+   equivalents. See `reference/sh-lib.md` for every available function,
+   its arguments, and its return/output convention.
 5. **Guarded-constant idiom**: Use guarded-constant idioms like
    `[[ -z "${X:-}" ]] && readonly X=...`. See `template/template.sh`
 
@@ -87,8 +89,10 @@ Use the guidelines below when generating or modifying bash shell scripts.
   Follow the patterns found in `template/template.sh`
 - **Help**: Always add a `help()` function to the shell script file.
   Follow the patterns found in `template/template.sh`
-- **Logging**: Use the functions in `${HOME}/lib/sh-lib/msg_lib.sh` to
-  print messages during the execution of the shell script.
+- **Logging**: Use the `msg::*` functions in `${HOME}/lib/sh-lib/msg_lib.sh`
+  to print messages during the execution of the shell script. They all write
+  to stderr and take `printf`-style arguments. Note `msg::error` returns
+  while `msg::die` exits. See `reference/sh-lib.md`.
 - **CLI Options**: Write a function similar to `parse_options()` found in the
   `template/template.sh` to parse CLI input options.
 - **Required tools**: Write a function similar to `check_required_tool()`
@@ -123,7 +127,19 @@ Use the guidelines below when generating or modifying bash shell scripts.
 ## Code Verification
 
 - **Linter**: All code generated must strictly pass **ShellCheck** static
-  analysis validation.
+  analysis validation, reporting nothing at the default severity:
+
+    ```bash
+    shellcheck "${script}"
+    ```
+
+- **Sourced Libraries**: ShellCheck cannot follow the `${HOME}/lib/sh-lib`
+  libraries and reports an `SC1091` for each one. Put a
+  `# shellcheck source=/dev/null` directive on the line immediately above
+  every `source` statement, as `template/template.sh` does.
+- **Suppressions**: Silence a finding only when it is a genuine false
+  positive, using a narrow `# shellcheck disable=SCxxxx` directive on the
+  line above the offending line. Never disable a check for the whole file.
 
 ## Code Patterns and Template
 
