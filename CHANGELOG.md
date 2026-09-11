@@ -29,6 +29,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.0.12] - 2026-09-11
+
+### Added
+
 - added new skill for shell script
 
 ### Changed
