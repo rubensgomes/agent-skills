@@ -315,7 +315,8 @@ release-push:
 # Install
 # -----------------------------------------------------------------------------
 
-# Install this repo's skills into ~/.claude/skills via the repo's own script.
+# Install this repo's skills into the Claude Code and Copilot skills
+# directories via the repo's own script.
 .PHONY: install
 install:
 	@bin/sync-skills.sh --source ./skills --verbose
@@ -337,7 +338,7 @@ help:
 	@echo "  verify           both of the above (what release.yml gates on)"
 	@echo ""
 	@echo "Install:"
-	@echo "  install          sync ./skills into ~/.claude/skills"
+	@echo "  install          sync ./skills into ~/.claude and ~/.copilot"
 	@echo "  install-dry-run  show what install would do, change nothing"
 	@echo ""
 	@echo "Release (see CHANGELOG.md for what counts as which level):"

@@ -29,7 +29,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+- `bin/sync-skills.sh` now copies the project `CLAUDE.md`, the sibling of the
+  `--source` directory, into `~/.claude/`.
+
 ### Changed
+
+- `bin/sync-skills.sh` now syncs into both `~/.claude/skills` and
+  `~/.copilot/skills`. The destinations are fixed: the `--dest` option is
+  gone, so a run that passes it now fails.
 
 ### Fixed
 

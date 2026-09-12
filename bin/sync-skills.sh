@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 ## SPDX-License-Identifier: MIT
 ##
-## Mirrors a source skills directory into the Claude Code skills
-## directory, moving aside whatever the source no longer carries.
+## Mirrors a source skills directory into the Claude Code and GitHub
+## Copilot skills directories, moving aside whatever the source no
+## longer carries, and copies the project CLAUDE.md into the Claude
+## Code home directory.
 ##
 ## Repository:
 ##   https://github.com/rubensgomes/agent-skills
@@ -74,9 +76,17 @@ readonly IS_DEBUGGER=FALSE
   "rmdir"
 )
 
-# destination used when the caller does not name one.
-[[ -z "${DEFAULT_DEST_DIR:-}" ]] \
-  && readonly DEFAULT_DEST_DIR="${HOME}/.claude/skills"
+# skills directories this script writes into.
+[[ -z "${DEST_DIRS[*]:-}" ]] && readonly -a DEST_DIRS=(
+  "${HOME}/.claude/skills"
+  "${HOME}/.copilot/skills"
+)
+
+# project file copied beside the Claude Code skills directory, and the
+# directory it lands in.
+[[ -z "${CLAUDE_MD_NAME:-}" ]] && readonly CLAUDE_MD_NAME="CLAUDE.md"
+[[ -z "${CLAUDE_MD_DEST_DIR:-}" ]] \
+  && readonly CLAUDE_MD_DEST_DIR="${HOME}/.claude"
 
 # Prefix of the sibling folder that orphaned files are moved into
 # rather than deleted, so "<dest>" backs up into "<prefix><dest>".
@@ -130,9 +140,6 @@ declare g_is_force_delete=FALSE
 # Source directory as the user typed it
 declare g_source_arg=
 
-# Destination directory as the user typed it
-declare g_dest_arg=
-
 
 #####################################################################
 ## FUNCTIONS ########################################################
@@ -141,7 +148,9 @@ declare g_dest_arg=
 ## Prints help to stdout.
 ## Globals:
 ##  BACKUP_DIR_PREFIX
-##  DEFAULT_DEST_DIR
+##  CLAUDE_MD_DEST_DIR
+##  CLAUDE_MD_NAME
+##  DEST_DIRS
 ##  PRG
 ## Arguments:
 ##  none.
@@ -149,13 +158,21 @@ declare g_dest_arg=
 ##   0 always
 #####################################################################
 help() {
+  local dest_list
+  dest_list="$(printf "  %s\n" "${DEST_DIRS[@]}")"
+
   cat <<EOF
 
 "${PRG}" mirrors a source skills directory into the Claude Code
-skills directory.
+and GitHub Copilot skills directories, and copies the project
+${CLAUDE_MD_NAME} into ${CLAUDE_MD_DEST_DIR}.
 
 Usage:
   ${PRG} -s <source> [options]
+
+Destinations (fixed):
+${dest_list}
+  ${CLAUDE_MD_DEST_DIR}/${CLAUDE_MD_NAME}
 
 General Non Argument Options:
 
@@ -169,21 +186,17 @@ General Non Argument Options:
 Argument Options:
 
   -s, --source <dir>           skills directory to sync from
-      --dest <dir>             directory to sync into
 
 source (**required**):
   The skills directory this run reads from. Nothing under it is
-  modified.
+  modified. A ${CLAUDE_MD_NAME} beside it is copied into
+  ${CLAUDE_MD_DEST_DIR}.
 
-dest:
-  The directory this run writes into. Defaults to
-  ${DEFAULT_DEST_DIR}. Provided mainly so the script can be
-  rehearsed against a throwaway tree.
-
-Files present in the destination but absent from the source are moved
-to a sibling folder of <dest> carrying the "${BACKUP_DIR_PREFIX}"
-prefix, rather than deleted. The default destination therefore backs
-up into ${HOME}/.claude/${BACKUP_DIR_PREFIX}skills.
+Files present in a destination but absent from the source are moved
+to a sibling folder of that destination carrying the
+"${BACKUP_DIR_PREFIX}" prefix, rather than deleted, and so back up
+into ${HOME}/.claude/${BACKUP_DIR_PREFIX}skills and
+${HOME}/.copilot/${BACKUP_DIR_PREFIX}skills.
 
 EOF
 }
@@ -210,7 +223,6 @@ EOF
 #####################################################################
 ## Resets the global variables to their initial state.
 ## Globals:
-##  g_dest_arg
 ##  g_is_dry_run
 ##  g_is_force_delete
 ##  g_source_arg
@@ -223,15 +235,12 @@ reset_globals() {
   g_is_dry_run=FALSE
   g_is_force_delete=FALSE
   g_source_arg=
-  g_dest_arg=
 }
 
 #####################################################################
 ## Parses user's command line input option arguments.
 ## Globals:
-##  DEFAULT_DEST_DIR
 ##  PRG
-##  g_dest_arg
 ##  g_is_dry_run
 ##  g_source_arg
 ## Arguments:
@@ -252,7 +261,7 @@ parse_options() {
   if ! temp=$(
     getopt \
       --o 'dhnqvxs:' \
-      --long 'debug,dest:,dry-run,help,quiet,source:,trace,verbose' \
+      --long 'debug,dry-run,help,quiet,source:,trace,verbose' \
       --name "${PRG}" \
       -- "${@}"
   ); then
@@ -313,19 +322,6 @@ parse_options() {
         continue
         ;;
 
-      ########## --dest #############################################
-      '--dest')
-        if [[ -z "${2:-}" || -z "${2//[[:space:]]/}" ]]; then
-          msg::error "dest is missing or blank."
-          usage
-          return 2
-        fi
-        g_dest_arg="$(sh::trim_space "${2}")" || return
-        msg::debug "dest=%s\n" "${g_dest_arg}"
-        shift 2
-        continue
-        ;;
-
       ########## --verbose ##########################################
       '-v' | '--verbose')
         msg::enable_verbose
@@ -370,11 +366,6 @@ parse_options() {
       "--source <dir>"
     usage
     return 2
-  fi
-
-  # apply the default destination when the user named none.
-  if [[ -z "${g_dest_arg:-}" ]]; then
-    g_dest_arg="${DEFAULT_DEST_DIR}"
   fi
 
   msg::debug "%s completed successfully.\n" "${FUNCNAME[0]}"
@@ -607,29 +598,29 @@ validate_source_dir() {
 ## Globals:
 ##  g_is_dry_run
 ## Arguments:
-##   1 [required]: destination directory as the user typed it.
+##   1 [required]: destination directory.
 ## Outputs:
 ##   Resolved absolute destination directory to stdout.
 ## Returns:
 ##   0 if okay; 1 if the destination is unusable.
 #####################################################################
 prepare_dest_dir() {
-  local -r dest_arg="${1:-}"
+  local -r dest="${1:-}"
   local resolved
   local parent
   local base
 
-  if [[ -e "${dest_arg}" && ! -d "${dest_arg}" ]]; then
+  if [[ -e "${dest}" && ! -d "${dest}" ]]; then
     msg::error "destination exists but is not a directory: %s\n" \
-      "${dest_arg}"
+      "${dest}"
     return 1
   fi
 
-  if [[ ! -d "${dest_arg}" ]]; then
+  if [[ ! -d "${dest}" ]]; then
 
     if [[ "${g_is_dry_run}" == TRUE ]]; then
-      parent="$(dirname -- "${dest_arg}")"
-      base="$(basename -- "${dest_arg}")"
+      parent="$(dirname -- "${dest}")"
+      base="$(basename -- "${dest}")"
 
       if ! resolved="$(to_absolute_path "${parent}")"; then
         msg::error "cannot resolve destination parent: %s\n" \
@@ -641,23 +632,23 @@ prepare_dest_dir() {
       return 0
     fi
 
-    if ! mkdir -p -- "${dest_arg}"; then
+    if ! mkdir -p -- "${dest}"; then
       msg::error "cannot create destination directory: %s\n" \
-        "${dest_arg}"
+        "${dest}"
       return 1
     fi
 
   fi
 
-  if [[ ! -w "${dest_arg}" || ! -x "${dest_arg}" ]]; then
+  if [[ ! -w "${dest}" || ! -x "${dest}" ]]; then
     msg::error "destination directory is not writable: %s\n" \
-      "${dest_arg}"
+      "${dest}"
     return 1
   fi
 
-  if ! resolved="$(to_absolute_path "${dest_arg}")"; then
+  if ! resolved="$(to_absolute_path "${dest}")"; then
     msg::error "cannot resolve destination directory: %s\n" \
-      "${dest_arg}"
+      "${dest}"
     return 1
   fi
 
@@ -726,8 +717,8 @@ assert_paths_disjoint() {
 
 #####################################################################
 ## Derives the backup directory for a destination: a sibling folder
-## carrying the backup prefix, so a rehearsal --dest keeps its backups
-## beside it instead of in the real skills tree.
+## carrying the backup prefix, so retired files land beside the skills
+## tree instead of inside it.
 ## Globals:
 ##  BACKUP_DIR_PREFIX
 ## Arguments:
@@ -1111,13 +1102,92 @@ run_passes() {
 }
 
 #####################################################################
+## Copies the project CLAUDE.md, the sibling of the source skills
+## directory, into the Claude Code home directory.
+## Globals:
+##  CLAUDE_MD_DEST_DIR
+##  CLAUDE_MD_NAME
+## Arguments:
+##   1 [required]: resolved absolute source directory.
+## Returns:
+##   0 if okay; 1 if the copy fails.
+#####################################################################
+copy_claude_md() {
+  local -r source_dir="${1:-}"
+  local src_file
+  local verb
+
+  src_file="$(dirname -- "${source_dir}")/${CLAUDE_MD_NAME}"
+
+  if [[ ! -f "${src_file}" ]]; then
+    msg::warn "no %s beside the source directory: %s\n" \
+      "${CLAUDE_MD_NAME}" "${src_file}"
+    return 0
+  fi
+
+  verb="$(
+    copy_one_file "${src_file}" "${CLAUDE_MD_NAME}" \
+      "${CLAUDE_MD_DEST_DIR}"
+  )" || return 1
+
+  msg::info "%s %s in %s\n" \
+    "${verb}" "${CLAUDE_MD_NAME}" "${CLAUDE_MD_DEST_DIR}"
+}
+
+#####################################################################
+## Syncs the source into one resolved destination.
+## Globals:
+##  None.
+## Arguments:
+##   1 [required]: resolved absolute source directory.
+##   2 [required]: resolved absolute destination directory.
+## Returns:
+##   0 if okay; something else if a pass fails.
+#####################################################################
+sync_one_dest() {
+  local -r source_dir="${1:-}"
+  local -r dest_dir="${2:-}"
+  local backup_dir
+
+  backup_dir="$(backup_dir_for "${dest_dir}")" || return
+
+  assert_paths_disjoint "${source_dir}" "${dest_dir}" \
+    "${backup_dir}" || return
+
+  msg::debug "[%s]: %s\n" "backup_dir" "${backup_dir}"
+  msg::info "syncing into %s\n" "${dest_dir}"
+
+  run_passes "${source_dir}" "${dest_dir}" "${backup_dir}"
+}
+
+#####################################################################
+## Syncs the source into every destination.
+## Globals:
+##  DEST_DIRS
+## Arguments:
+##   1 [required]: resolved absolute source directory.
+## Returns:
+##   0 if okay; something else if a destination fails.
+#####################################################################
+sync_all_dests() {
+  local -r source_dir="${1:-}"
+  local dest
+  local dest_dir
+
+  for dest in "${DEST_DIRS[@]}"; do
+    dest_dir="$(prepare_dest_dir "${dest}")" || return
+    msg::debug "[%s]: %s\n" "dest_dir" "${dest_dir}"
+    sync_one_dest "${source_dir}" "${dest_dir}" || return
+  done
+}
+
+#####################################################################
 ## Main function.
 ## Globals:
 ##  IS_DEBUGGER
 ##  PRG
 ##  REQUIRED_TOOLS
 ##  TMP_DIR
-##  g_dest_arg
 ##  g_is_dry_run
 ##  g_is_force_delete
 ##  g_source_arg
@@ -1158,26 +1228,16 @@ main() {
   msg::debug "[%s]: %s\n" "g_is_dry_run" "${g_is_dry_run}"
   msg::debug "[%s]: %s\n" "g_is_force_delete" "${g_is_force_delete}"
   msg::debug "[%s]: %s\n" "g_source_arg" "${g_source_arg}"
-  msg::debug "[%s]: %s\n" "g_dest_arg" "${g_dest_arg}"
 
-  # --------------- >>> Resolve And Vet The Two Trees <<< -----------
+  # --------------- >>> Resolve And Vet The Source Tree <<< ---------
 
   # Resolved paths are locals, not globals: every function below
   # receives what it needs as an argument.
   local source_dir
-  local dest_dir
-  local backup_dir
 
   source_dir="$(validate_source_dir "${g_source_arg}")" || return
-  dest_dir="$(prepare_dest_dir "${g_dest_arg}")" || return
-  backup_dir="$(backup_dir_for "${dest_dir}")" || return
-
-  assert_paths_disjoint "${source_dir}" "${dest_dir}" \
-    "${backup_dir}" || return
 
   msg::debug "[%s]: %s\n" "source_dir" "${source_dir}"
-  msg::debug "[%s]: %s\n" "dest_dir" "${dest_dir}"
-  msg::debug "[%s]: %s\n" "backup_dir" "${backup_dir}"
 
   # --------------- >>> Is this a Dry Run Only  <<< -----------------
 
@@ -1188,9 +1248,13 @@ main() {
     msg::debug "I am running in dry-run mode.\n"
   fi
 
-  # --------------- >>> Run The Three Passes <<< --------------------
+  # --------------- >>> Sync Every Destination <<< ------------------
 
-  run_passes "${source_dir}" "${dest_dir}" "${backup_dir}" || return
+  sync_all_dests "${source_dir}" || return
+
+  # --------------- >>> Copy The Project CLAUDE.md <<< --------------
+
+  copy_claude_md "${source_dir}" || return
 }
 
 #####################################################################

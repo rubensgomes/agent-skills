@@ -9,21 +9,22 @@ are tailored to specific programming languages (e.g., Bash, Java, Python),
 while others may provide general-purpose capabilities.
 
 
-## Installing in Claude Code
+## Installing in Claude Code and GitHub Copilot
 
 `make install` runs `bin/sync-skills.sh` against this repository's `skills/`
-directory, mirroring it into `~/.claude/skills/`:
+directory, mirroring it into `~/.claude/skills/` and `~/.copilot/skills/`, and
+copying this repository's `CLAUDE.md` into `~/.claude/`:
 
 ```bash
 make install-dry-run   # show what would change, touch nothing
-make install           # sync ./skills into ~/.claude/skills
+make install           # sync ./skills into ~/.claude and ~/.copilot
 ```
 
 Files already installed are overwritten from this repository. Files there that
-this repository no longer carries are moved to `~/.claude/old-skills/` — a
-sibling of the destination, not a folder inside it — rather than deleted, and
-the directories that leaves empty are removed. Run `bin/sync-skills.sh --help`
-for the full option list.
+this repository no longer carries are moved to `~/.claude/old-skills/` and
+`~/.copilot/old-skills/` — siblings of the destinations, not folders inside
+them — rather than deleted, and the directories that leaves empty are removed.
+Run `bin/sync-skills.sh --help` for the full option list.
 
 ## Developing
 
