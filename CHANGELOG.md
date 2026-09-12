@@ -29,6 +29,14 @@ notes rot, and a reader who trusts one reasons from a false premise.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.0.14] - 2026-09-11
+
+### Added
+
 - `bin/sync-skills.sh` now copies the project `CLAUDE.md`, the sibling of the
   `--source` directory, into `~/.claude/`.
 
